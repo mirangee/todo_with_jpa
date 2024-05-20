@@ -8,8 +8,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -39,10 +42,8 @@ public class UserController {
     ) {
         log.info("/api/auth POST!! dto={}", dto);
 
-        if (result.hasErrors()) {
-            log.warn(result.toString());
-            return ResponseEntity.badRequest().body(result.getFieldErrors());
-        }
+        ResponseEntity<List<FieldError>> resultEntity = getFiledErrorResponseEntity(result);
+        if (resultEntity != null) return resultEntity;
 
         try {
             UserSignUpResponseDTO responseDTO = userService.create(dto);
@@ -60,14 +61,28 @@ public class UserController {
     // 로그인 결과를 응답 상태 코드로 구분해서 보내 주세요.
     // 로그인이 성공했다면 200, 로그인 실패라면 400을 보내주세요. (에러 메세지를 상황에 따라 다르게 전달해 주세요)
     @PostMapping("/signin")
-    public ResponseEntity<?> signIn(@RequestBody LoginRequestDTO dto) {
+    public ResponseEntity<?> signIn(
+            @Validated @RequestBody LoginRequestDTO dto,
+            BindingResult result
+            ) {
         log.info("/api/auth/signin POST!!! LoginRequestDTO : {}", dto);
+
+        ResponseEntity<List<FieldError>> resultEntity = getFiledErrorResponseEntity(result);
+        if (resultEntity != null) return resultEntity;
+
         try {
-            if(userService.login(dto) != null) {
-                return ResponseEntity.ok().body(userService.login(dto));
-            };
+            String authenticate = userService.authenticate(dto);
+            return ResponseEntity.ok().body(authenticate);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("가입되지 않은 계정이거나 비밀번호가 일치하지 않습니다.");
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
+    private static ResponseEntity<List<FieldError>> getFiledErrorResponseEntity(BindingResult result) {
+        if (result.hasErrors()) {
+            log.warn(result.toString());
+            return ResponseEntity.badRequest().body(result.getFieldErrors());
         }
         return null;
     }
