@@ -1,13 +1,15 @@
 package com.example.todo.userApi.api;
 
+import com.example.todo.userApi.dto.request.LoginRequestDTO;
+import com.example.todo.userApi.dto.request.UserSignUpRequestDTO;
+import com.example.todo.userApi.dto.response.UserSignUpResponseDTO;
 import com.example.todo.userApi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Slf4j
@@ -26,5 +28,47 @@ public class UserController {
             return ResponseEntity.badRequest().body("이메일이 없습니다.");
         }
         return ResponseEntity.ok().body(userService.isDuplicate(email));
+    }
+
+    // 회원가입 요청 처리
+    // POST: /api/auth
+    @PostMapping
+    public ResponseEntity<?> signUp(
+           @Validated @RequestBody UserSignUpRequestDTO dto,
+            BindingResult result
+    ) {
+        log.info("/api/auth POST!! dto={}", dto);
+
+        if (result.hasErrors()) {
+            log.warn(result.toString());
+            return ResponseEntity.badRequest().body(result.getFieldErrors());
+        }
+
+        try {
+            UserSignUpResponseDTO responseDTO = userService.create(dto);
+            log.info("save 완료 후 responseDTO 반환 중 in Controller dto={}", dto);
+            return ResponseEntity.ok().body(responseDTO);
+        } catch (Exception e) {
+            log.info("save 완료 후 예외발생! in Controller");
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 로그인 요청 처리 메서드를 선언하세요.
+    // LoginRequestDTO 클래스를 생성해서 요청 값을 받아 주세요.
+    // service로 넘겨서 로그인 유효성을 검증하세요.(암호화되어 있어요)
+    // 로그인 결과를 응답 상태 코드로 구분해서 보내 주세요.
+    // 로그인이 성공했다면 200, 로그인 실패라면 400을 보내주세요. (에러 메세지를 상황에 따라 다르게 전달해 주세요)
+    @PostMapping("/signin")
+    public ResponseEntity<?> signIn(@RequestBody LoginRequestDTO dto) {
+        log.info("/api/auth/signin POST!!! LoginRequestDTO : {}", dto);
+        try {
+            if(userService.login(dto) != null) {
+                return ResponseEntity.ok().body(userService.login(dto));
+            };
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("가입되지 않은 계정이거나 비밀번호가 일치하지 않습니다.");
+        }
+        return null;
     }
 }

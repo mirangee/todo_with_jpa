@@ -13,4 +13,7 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     // 쿼리 메서드 existsBy<필드이름> 사용
     boolean existsByEmail(String email);
+
+    @Query("SELECT u FROM User u WHERE u.email = :email")
+    User findOneByEmail(@Param("email") String email);
 }
