@@ -31,4 +31,8 @@ public class User {
 
     @CreationTimestamp
     private LocalDateTime joinDate;
+
+    @Enumerated(EnumType.STRING) // 기본값은 ORDINAL으로, 숫자로 저장되기 때문에 STRING으로 지정
+    @Builder.Default // 처음 USER 객체가 세팅될 때 아래와 같이 세팅하도록 설정
+    private Role role = Role.COMMON; // 유저 권한
 }

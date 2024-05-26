@@ -50,13 +50,13 @@ public class TokenProvider {
         // 만약 추가 클레임이 있다면 Map으로 정의한 후 넣으면 된다.
         Map<String, String> claims = new HashMap<>();
         claims.put("email", userEntity.getEmail());
-//        claims.put("role", userEntity.getRole());
+        claims.put("role", userEntity.getRole().toString());
         
         return Jwts.builder()
                 // token header에 들어갈 서명
                 .signWith(
                         Keys.hmacShaKeyFor(SECRET_KEY.getBytes()),
-                        SignatureAlgorithm.ES512
+                        SignatureAlgorithm.HS512
                 )
                 // token payload에 들어갈 클레임 설정
                 .setIssuer("Todo운영자") // iss: 발급자 정보

@@ -1,6 +1,8 @@
 package com.example.todo.userApi.service;
 
+import com.example.todo.auth.TokenProvider;
 import com.example.todo.userApi.dto.request.LoginRequestDTO;
+import com.example.todo.userApi.dto.response.LoginResponseDTO;
 import com.example.todo.userApi.dto.response.UserSignUpResponseDTO;
 import com.example.todo.userApi.dto.request.UserSignUpRequestDTO;
 import com.example.todo.userApi.entity.User;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenProvider tokenProvider;
 
     public boolean isDuplicate(String email) {
         return userRepository.existsByEmail(email);
@@ -38,7 +41,7 @@ public class UserService {
         return new UserSignUpResponseDTO(saved);
     }
 
-    public String authenticate(LoginRequestDTO dto) throws Exception {
+    public LoginResponseDTO authenticate(LoginRequestDTO dto) throws Exception {
 
         // 이메일을 통해 회원 정보 조회
         User foundUser = userRepository.findOneByEmail(dto.getEmail())
@@ -55,7 +58,8 @@ public class UserService {
 
         // 로그인 성공 후에 클라이언트에게 뭘 리턴해 줄 것인가?
         // -> JWT(JSON Web Token)을 클라이언트에게 발급해 주어야 한다(로그인 유지를 위한 세션의 대체제).
+        String token = tokenProvider.createToken(foundUser);
 
-        return "SUCCESS";
+        return new LoginResponseDTO(foundUser, token);
     }
 }
